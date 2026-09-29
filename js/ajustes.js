@@ -262,7 +262,7 @@ const abrirRespaldo = (alCambiar) => {
     const b = ev.target.closest('button');
     if (!b) return;
     if (b.dataset.exportar !== undefined) {
-      descargar(new Blob([A.exportar()], {type: 'application/json'}), `stickdocs-respaldo-${hoyISO()}.json`);
+      descargar(new Blob([A.exportar()], {type: 'application/json'}), `stickreceipt-respaldo-${hoyISO()}.json`);
       aviso('Respaldo descargado');
     } else if (b.dataset.modo) {
       modo = b.dataset.modo;

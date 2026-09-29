@@ -4,7 +4,7 @@
 
 import {uid, aNumero} from './util.js';
 
-const CLAVE = 'stickdocs-v1';
+const CLAVE = 'stickreceipt-v1';
 
 export const TIPOS_DOC = {
   cc: {nombre: 'Cuenta de cobro', corto: 'Cuenta de cobro', prefijo: 'CC-'},
@@ -194,14 +194,14 @@ export const calcular = (doc) => {
 };
 
 /* ── Respaldo ───────────────────────────────────────────────────────── */
-export const exportar = () => JSON.stringify({app: 'STICK DOCS', version: 1, exportado: new Date().toISOString(), datos: estado}, null, 2);
+export const exportar = () => JSON.stringify({app: 'STICK RECEIPT', version: 1, exportado: new Date().toISOString(), datos: estado}, null, 2);
 
 export const importar = (texto, modo = 'reemplazar') => {
   let j;
   try { j = JSON.parse(texto); } catch (e) { throw new Error('El archivo no es un respaldo válido (no se puede leer como JSON)'); }
   const datos = j.datos || j;
   if (!datos || typeof datos !== 'object' || !('emisor' in datos || 'docs' in datos || 'clientes' in datos)) {
-    throw new Error('El archivo no parece un respaldo de STICK DOCS');
+    throw new Error('El archivo no parece un respaldo de STICK RECEIPT');
   }
   if (modo === 'reemplazar') estado = mezclar(porDefecto(), datos);
   else {

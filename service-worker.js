@@ -1,7 +1,7 @@
 /* Service worker: deja la herramienta funcionando sin conexión.
    Estrategia: red primero para el propio sitio (siempre la versión nueva si hay señal) y caché
    de respaldo. Subir VERSION al publicar cambios para renovar la caché. */
-const VERSION = 'stickdocs-v1.0.0';
+const VERSION = 'stickreceipt-v1.0.0';
 const ARCHIVOS = [
   './', './index.html', './estilos.css', './manifest.json',
   './js/app.js', './js/almacen.js', './js/ajustes.js', './js/editor.js', './js/pdf.js', './js/ui.js', './js/util.js',

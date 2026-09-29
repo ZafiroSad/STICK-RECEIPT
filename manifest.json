@@ -1,6 +1,6 @@
 {
-  "name": "STICK DOCS",
-  "short_name": "STICK DOCS",
+  "name": "STICK RECEIPT",
+  "short_name": "STICK RECEIPT",
   "description": "Cuentas de cobro, cotizaciones, recibos, órdenes de servicio y actas de entrega en PDF.",
   "lang": "es",
   "start_url": "./",

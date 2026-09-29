@@ -54,7 +54,7 @@ export const construirPDF = (estado, doc) => {
   const tot = calcular(doc);
   let y = M;
 
-  pdf.setProperties({title: `${cfg.titulo} ${doc.num}`, author: emisor.comercial || emisor.nombre || 'STICK DOCS', creator: 'STICK DOCS'});
+  pdf.setProperties({title: `${cfg.titulo} ${doc.num}`, author: emisor.comercial || emisor.nombre || 'STICK RECEIPT', creator: 'STICK RECEIPT'});
 
   /* ── utilidades de dibujo ── */
   const color = (c) => pdf.setTextColor(c[0], c[1], c[2]);
@@ -108,7 +108,7 @@ export const construirPDF = (estado, doc) => {
   if (!altoCab) {
     fuente(15, 'bold');
     color(TINTA);
-    pdf.text(limpio(marca || 'STICK DOCS'), M, y + 6);
+    pdf.text(limpio(marca || 'STICK RECEIPT'), M, y + 6);
     altoCab = 8;
   }
   if (emisor.logo && marca) {
@@ -364,24 +364,24 @@ export const construirPDF = (estado, doc) => {
     if (imagen) {
       try {
         const p = pdf.getImageProperties(imagen);
-        const h = 16;
+        const h = 14;
         const wi = Math.min(w - 10, (p.width / p.height) * h);
         pdf.addImage(imagen, formatoImg(imagen), x + (w - wi) / 2, y, wi, h, undefined, 'FAST');
       } catch (e) { console.warn('Firma no válida', e); }
     }
     trazo(TINTA, 0.25);
-    pdf.line(x, y + 18, x + w, y + 18);
+    pdf.line(x, y + 15.5, x + w, y + 15.5);
     fuente(9, 'bold');
     color(TINTA);
-    pdf.text(limpio(nombre || ' '), x + w / 2, y + 22.6, {align: 'center'});
+    pdf.text(limpio(nombre || ' '), x + w / 2, y + 20, {align: 'center'});
     fuente(8, 'normal');
     color(GRIS);
-    pdf.text(limpio(detalle || etiqueta), x + w / 2, y + 26.6, {align: 'center'});
+    pdf.text(limpio(detalle || etiqueta), x + w / 2, y + 24, {align: 'center'});
   };
   const necesitaFirma = doc.tipo !== 'cot';
   if (necesitaFirma) {
-    salto(36);
-    y += 5;
+    salto(30);
+    y += 4;
     const w1 = 74;
     if (doc.tipo === 'ent') {
       firmar(M, w1, 'Entrega', nomEmi, [emisor.tipoDoc && emisor.numDoc ? `${emisor.tipoDoc} ${emisor.numDoc}` : '', 'Entrega'].filter(Boolean).join(' · '), doc.incluirFirma ? emisor.firma : '');
@@ -392,7 +392,7 @@ export const construirPDF = (estado, doc) => {
     } else {
       firmar(M, w1, 'Firma', nomEmi, emisor.numDoc ? `${emisor.tipoDoc || 'CC'} ${emisor.numDoc}` : 'Firma', doc.incluirFirma ? emisor.firma : '');
     }
-    y += 30;
+    y += 27;
   }
 
   /* ── pie y numeración ── */

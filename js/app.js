@@ -1,4 +1,4 @@
-/* STICK DOCS — arranque y las tres vistas: Emitir, Historial y Clientes.
+/* STICK RECEIPT — arranque y las tres vistas: Emitir, Historial y Clientes.
    El sitio no lleva datos personales: todo se guarda en el navegador de quien lo usa. */
 
 import * as A from './almacen.js';
