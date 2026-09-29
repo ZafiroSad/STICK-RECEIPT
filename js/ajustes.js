@@ -219,6 +219,7 @@ const abrirDefaults = (alCambiar) => {
   const p = abrirPantalla({titulo: 'Valores por defecto', contenido: ''});
   p.cuerpo.innerHTML = `<p class="sub" style="margin-bottom:16px">Se cargan en cada documento nuevo. Siempre se pueden cambiar documento por documento.</p>
     <div class="card pad">
+      <div class="field"><label>Formato del PDF por defecto</label><select data-k="estilo">${Object.entries(A.ESTILOS_PDF).map(([k, v]) => `<option value="${k}"${k === d.estilo ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></div>
       <div class="row2">${camposHTML([{k: 'ivaPct', label: 'IVA %', modo: 'decimal'}, {k: 'retPct', label: 'Retención %', modo: 'decimal'}], d)}</div>
       ${camposHTML([
         {k: 'retEtiqueta', label: 'Nombre de la retención', ph: 'Retención en la fuente'},

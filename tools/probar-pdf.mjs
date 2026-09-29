@@ -98,9 +98,12 @@ const docs = [];
   docs.push(d);
 }
 
-for (const d of docs) {
-  const pdf = construirPDF(st, d);
-  const nombre = nombreDePdf(d, st.emisor);
-  writeFileSync(join(salida, `${d.tipo}-${d.num}.pdf`), Buffer.from(pdf.output('arraybuffer')));
-  console.log('OK', d.tipo, d.num, pdf.getNumberOfPages(), 'pág.', nombre);
+for (const estilo of Object.keys(A.ESTILOS_PDF)) {
+  for (const d of docs) {
+    const doc = {...d, estilo};
+    const pdf = construirPDF(st, doc);
+    const nombre = nombreDePdf(doc, st.emisor);
+    writeFileSync(join(salida, `${estilo}-${d.tipo}-${d.num}.pdf`), Buffer.from(pdf.output('arraybuffer')));
+    console.log('OK', estilo.padEnd(11), d.tipo, d.num, pdf.getNumberOfPages(), 'pág.', nombre);
+  }
 }

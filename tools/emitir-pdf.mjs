@@ -1,13 +1,14 @@
 // Genera desde la línea de comandos el PDF de un documento guardado en un respaldo, con el mismo
 // generador que usa la aplicación. Uso:
-//   node tools/emitir-pdf.mjs <respaldo.json> <carpeta-salida> [numero-de-documento]
-// Sin número, emite todos los documentos del respaldo.
+//   node tools/emitir-pdf.mjs <respaldo.json> <carpeta-salida> [numero-de-documento] [estilo|todos]
+// Sin número, emite todos los documentos del respaldo. Con «todos» genera el documento en los cuatro estilos,
+// cada uno con el nombre del estilo delante, para poder elegir.
 import {createRequire} from 'node:module';
 import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
 import {pathToFileURL, fileURLToPath} from 'node:url';
 import {dirname, join, resolve} from 'node:path';
 
-const [, , respaldo, salida, numero] = process.argv;
+const [, , respaldo, salida, numero, estiloArg] = process.argv;
 if (!respaldo || !salida) {
   console.error('Uso: node tools/emitir-pdf.mjs <respaldo.json> <carpeta-salida> [numero]');
   process.exit(1);
@@ -30,9 +31,14 @@ if (!docs.length) {
   process.exit(1);
 }
 mkdirSync(resolve(salida), {recursive: true});
+const estilos = estiloArg === 'todos' ? Object.keys(A.ESTILOS_PDF) : [estiloArg || null];
 for (const d of docs) {
-  const pdf = construirPDF(estado, d);
-  const archivo = join(resolve(salida), nombreDePdf(d, estado.emisor));
-  writeFileSync(archivo, Buffer.from(pdf.output('arraybuffer')));
-  console.log('OK', d.num, pdf.getNumberOfPages(), 'pág.', archivo);
+  for (const estilo of estilos) {
+    const doc = estilo ? {...d, estilo} : d;
+    const pdf = construirPDF(estado, doc);
+    const nombre = nombreDePdf(doc, estado.emisor);
+    const archivo = join(resolve(salida), estiloArg === 'todos' ? `${estilo}_${nombre}` : nombre);
+    writeFileSync(archivo, Buffer.from(pdf.output('arraybuffer')));
+    console.log('OK', doc.num, estilo || doc.estilo || 'clasico', pdf.getNumberOfPages(), 'pág.', archivo);
+  }
 }

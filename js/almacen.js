@@ -14,6 +14,14 @@ export const TIPOS_DOC = {
   ent: {nombre: 'Acta de entrega', corto: 'Acta de entrega', prefijo: 'AE-'},
 };
 
+/** Estilos de formato del PDF. Todos sirven para los cinco tipos de documento. */
+export const ESTILOS_PDF = {
+  clasico: 'Clásico',
+  minimalista: 'Minimalista',
+  banda: 'Banda',
+  elegante: 'Elegante',
+};
+
 export const ESTADOS = {
   borrador: 'Borrador',
   emitido: 'Emitido',
@@ -40,6 +48,7 @@ const porDefecto = () => ({
     notasCot: 'Precios en pesos colombianos (COP).',
     pie: '',
     firmaEnDocs: true,
+    estilo: 'clasico',
   },
   clientes: [],
   docs: [],
@@ -134,6 +143,7 @@ export const docVacio = (tipo, hoy) => {
   const e = estado.emisor;
   return {
     id: uid(), tipo, num: proximoNumero(tipo), numSugerido: proximoNumero(tipo), fecha: hoy, lugar: e.ciudad || '',
+    estilo: ESTILOS_PDF[d.estilo] ? d.estilo : 'clasico',
     cliente: {nombre: '', tipoDoc: 'NIT', doc: '', direccion: '', ciudad: '', correo: '', telefono: '', contacto: ''},
     guardarCliente: true,
     concepto: '',

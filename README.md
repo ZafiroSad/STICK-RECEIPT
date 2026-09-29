@@ -14,6 +14,8 @@ Emite **cuentas de cobro, cotizaciones, recibos de pago, órdenes de servicio y 
 | Orden de servicio | Autoriza y describe un servicio, con fechas y firmas de las dos partes |
 | Acta de entrega | Constancia de lo entregado y de quién lo recibió conforme |
 
+- **Cuatro formatos de PDF para cualquier documento:** Clásico, Minimalista, Banda (cabecera en bloque de color) y Elegante (serifa y cabecera centrada). Se elige en cada documento y hay uno por defecto en Ajustes.
+- Los montos se escriben con miles automáticos: al teclear 1500000 el campo muestra 1.500.000.
 - Logo, firma escaneada y color del PDF configurables.
 - Clientes y métodos de pago guardados, para cargarlos con un toque.
 - Numeración consecutiva por tipo, con prefijo propio.
@@ -41,7 +43,7 @@ estilos.css         sistema visual STICK (campo, vidrio, píldoras, modo claro)
 js/app.js           arranque y las vistas: Emitir, Historial, Clientes
 js/editor.js        editor de documentos (los cinco tipos)
 js/ajustes.js       centro de ajustes y sus pantallas
-js/pdf.js           generador de PDF
+js/pdf.js           generador de PDF (los cuatro estilos)
 js/almacen.js       datos, numeración, cálculo de totales y respaldo
 js/util.js          dinero, fechas, valor en letras
 js/ui.js            iconos, Pantalla, aviso, dock y tema
@@ -59,7 +61,8 @@ Pruebas sin navegador:
 
 ```bash
 node tools/probar-util.mjs        # dinero y valor en letras
-node tools/probar-pdf.mjs salida  # un PDF de cada tipo en la carpeta «salida»
+node tools/probar-pdf.mjs salida  # cada tipo de documento en los cuatro formatos, en la carpeta «salida»
+node tools/emitir-pdf.mjs respaldo.json salida CC-001 todos   # un documento de un respaldo, en los cuatro formatos
 ```
 
 Al publicar un cambio, subir `VERSION` en `service-worker.js` para que los dispositivos renueven la caché.

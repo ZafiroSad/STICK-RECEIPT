@@ -26,10 +26,35 @@ export const aNumero = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-const fmtCOP = new Intl.NumberFormat('es-CO', {maximumFractionDigits: 0});
-const fmtDec = new Intl.NumberFormat('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-export const dinero = (n) => '$ ' + fmtCOP.format(Math.round(aNumero(n)));
-export const cantidad = (n) => fmtDec.format(aNumero(n));
+/** Agrupa los miles con punto, como se escribe en Colombia. Se hace a mano: en es-CO, Intl no agrupa los números de 4 cifras. */
+export const agrupar = (entero) => String(entero).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+export const dinero = (n) => '$ ' + agrupar(Math.round(aNumero(n)));
+export const cantidad = (n) => {
+  const v = Math.round(aNumero(n) * 100) / 100;
+  const [e, d] = String(v).split('.');
+  return agrupar(e) + (d ? ',' + d : '');
+};
+
+/** Da formato a un campo de dinero mientras se escribe: "1500000" pasa a "1.500.000" sin mover el cursor.
+    Solo entran dígitos y una coma decimal (hasta 2 decimales); el punto lo pone la función. */
+export const formatoVivo = (input) => {
+  const crudo = input.value;
+  const cursor = input.selectionStart ?? crudo.length;
+  const util = (c) => /[\d,]/.test(c);
+  const delante = [...crudo.slice(0, cursor)].filter(util).length;
+  let [ent, ...resto] = crudo.replace(/[^\d,]/g, '').split(',');
+  const hayComa = resto.length > 0;
+  const dec = resto.join('').slice(0, 2);
+  ent = ent.replace(/^0+(?=\d)/, '');
+  const nuevo = agrupar(ent) + (hayComa ? ',' + dec : '');
+  if (nuevo === crudo) return;
+  input.value = nuevo;
+  // El cursor se coloca después del mismo número de dígitos que tenía a su izquierda.
+  let vistos = 0;
+  let pos = 0;
+  while (pos < nuevo.length && vistos < delante) { if (util(nuevo[pos])) vistos++; pos++; }
+  try { input.setSelectionRange(pos, pos); } catch (e) { /* algunos tipos de campo no admiten selección */ }
+};
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 export const hoyISO = () => {

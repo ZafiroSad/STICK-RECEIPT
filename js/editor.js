@@ -2,7 +2,7 @@
    los totales se recalculan mientras se escribe y la vista previa es el PDF real. */
 
 import * as A from './almacen.js';
-import {esc, aNumero, dinero, valorEnLetras, hoyISO, descargar} from './util.js';
+import {esc, aNumero, dinero, cantidad, formatoVivo, valorEnLetras, descargar} from './util.js';
 import {construirPDF, nombreDePdf, conValores} from './pdf.js';
 import {ICONOS, abrirPantalla, aviso, confirmarEn} from './ui.js';
 
@@ -18,9 +18,9 @@ const CFG = {
   ent: {concepto: 'Descripción de la entrega', ph: 'Qué se entrega y en qué estado…', valores: false, ajustes: false, pago: false, noIva: false, campos: ['receptor']},
 };
 
-const campoHTML = ({k, label, tipo = 'text', valor = '', ph = '', ayuda = '', modo = '', mx = ''}) => `
+const campoHTML = ({k, label, tipo = 'text', valor = '', ph = '', ayuda = '', modo = '', mx = '', dinero: esDinero = false}) => `
   <div class="field"><label>${esc(label)}</label>
-    <input data-k="${esc(k)}" type="${tipo}" value="${esc(valor)}" placeholder="${esc(ph)}" ${modo ? `inputmode="${modo}"` : ''} ${mx} autocomplete="off">
+    <input data-k="${esc(k)}" ${esDinero ? 'data-dinero' : ''} type="${tipo}" value="${esc(valor)}" placeholder="${esc(ph)}" ${modo ? `inputmode="${modo}"` : ''} ${mx} autocomplete="off">
     ${ayuda ? `<div class="ayuda">${esc(ayuda)}</div>` : ''}</div>`;
 
 const areaHTML = ({k, label, valor = '', ph = '', filas = 4}) => `
@@ -30,7 +30,7 @@ const interruptorHTML = (k, texto, on) =>
   `<button type="button" class="interruptor${on ? ' on' : ''}" data-sw="${esc(k)}" aria-pressed="${on ? 'true' : 'false'}"><span>${esc(texto)}</span><span class="pista"></span></button>`;
 
 /** Cómo se muestra un número en un campo al salir de él: "500.000" o "1,5". */
-const formatoCampo = (n) => n.toLocaleString('es-CO', {maximumFractionDigits: 2, useGrouping: n >= 1000});
+const formatoCampo = (n) => cantidad(n);
 
 const leer = (obj, ruta) => ruta.split('.').reduce((o, p) => (o ? o[p] : undefined), obj);
 const escribir = (obj, ruta, v) => {
@@ -43,6 +43,8 @@ const escribir = (obj, ruta, v) => {
 export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
   const st = A.obtener();
   const doc = JSON.parse(JSON.stringify(docInicial));
+  // Documentos guardados antes de que existieran los estilos se emitieron en el clásico.
+  if (!A.ESTILOS_PDF[doc.estilo]) doc.estilo = 'clasico';
   const cfg = CFG[doc.tipo];
   const tipoInfo = A.TIPOS_DOC[doc.tipo];
   const numericos = new Set(['descPct', 'descVal', 'ivaPct', 'retPct', 'validezDias', 'anticipoPct', 'saldo']);
@@ -52,7 +54,7 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
   const modoItems = { detalle: doc.tipo === 'cot' || doc.tipo === 'os' || doc.tipo === 'ent' || doc.items.length > 1 };
 
   const pantalla = abrirPantalla({
-    titulo: nuevo ? `Nueva ${tipoInfo.nombre.toLowerCase()}` : `${tipoInfo.nombre} ${doc.num}`,
+    titulo: nuevo ? `${doc.tipo === 'rec' ? 'Nuevo' : 'Nueva'} ${tipoInfo.nombre.toLowerCase()}` : `${tipoInfo.nombre} ${doc.num}`,
     ancha: true,
     alCerrar,
     contenido: '<div class="editor"><div data-form></div><div class="prev" data-prev></div></div>',
@@ -71,7 +73,7 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
       <div class="${cfg.valores ? 'row3' : 'row2'}">
         <div class="field"><label>Cantidad</label><input data-ik="c" data-i="${i}" inputmode="decimal" value="${esc(it.c)}"></div>
         <div class="field"><label>Unidad</label><select data-ik="u" data-i="${i}">${UNIDADES.map((u) => `<option${u === it.u ? ' selected' : ''}>${esc(u)}</option>`).join('')}</select></div>
-        ${cfg.valores ? `<div class="field"><label>Valor unitario</label><input data-ik="v" data-i="${i}" inputmode="decimal" value="${it.v ? esc(it.v) : ''}" placeholder="0"></div>` : ''}
+        ${cfg.valores ? `<div class="field"><label>Valor unitario</label><input data-ik="v" data-dinero data-i="${i}" inputmode="decimal" value="${it.v ? esc(formatoCampo(aNumero(it.v))) : ''}" placeholder="0"></div>` : ''}
       </div>
       ${cfg.valores ? `<div class="sub-t num" data-sub="${i}">${dinero(aNumero(it.c) * aNumero(it.v))}</div>` : ''}
     </div>`;
@@ -104,7 +106,7 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
     <div data-ajustes ${conAjustes.on ? '' : 'hidden'}>
       <div class="row2">
         ${campoHTML({k: 'descPct', label: 'Descuento %', valor: doc.descPct || '', modo: 'decimal', ph: '0'})}
-        ${campoHTML({k: 'descVal', label: 'Descuento en pesos', valor: doc.descVal || '', modo: 'decimal', ph: '0'})}
+        ${campoHTML({k: 'descVal', label: 'Descuento en pesos', valor: doc.descVal ? formatoCampo(aNumero(doc.descVal)) : '', modo: 'decimal', ph: '0', dinero: true})}
       </div>
       <div class="row2">
         ${campoHTML({k: 'ivaPct', label: 'IVA %', valor: doc.ivaPct || '', modo: 'decimal', ph: '0'})}
@@ -122,7 +124,7 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
     if (c.includes('entrega')) h += campoHTML({k: 'entrega', label: 'Tiempo de entrega', valor: doc.entrega, ph: '15 días hábiles tras el anticipo'});
     if (c.includes('formaPago')) h += campoHTML({k: 'formaPago', label: 'Forma de pago', valor: doc.formaPago, ph: '50% al iniciar, 50% al entregar'});
     if (c.includes('medioPago')) h += `<div class="field"><label>Medio de pago</label><select data-k="medioPago">${MEDIOS.map((m) => `<option${m === doc.medioPago ? ' selected' : ''}>${m}</option>`).join('')}</select></div>`;
-    if (c.includes('referencia')) h += `<div class="row2">${campoHTML({k: 'referencia', label: 'Referencia (opcional)', valor: doc.referencia})}${campoHTML({k: 'saldo', label: 'Saldo pendiente', valor: doc.saldo || '', modo: 'decimal', ph: '0'})}</div>`;
+    if (c.includes('referencia')) h += `<div class="row2">${campoHTML({k: 'referencia', label: 'Referencia (opcional)', valor: doc.referencia})}${campoHTML({k: 'saldo', label: 'Saldo pendiente', valor: doc.saldo ? formatoCampo(aNumero(doc.saldo)) : '', modo: 'decimal', ph: '0', dinero: true})}</div>`;
     if (c.includes('fechas')) h += `<div class="row2">${campoHTML({k: 'inicio', label: 'Inicio', tipo: 'date', valor: doc.inicio})}${campoHTML({k: 'fin', label: 'Entrega', tipo: 'date', valor: doc.fin})}</div>`;
     if (c.includes('receptor')) h += `<div class="row2">${campoHTML({k: 'receptor', label: doc.tipo === 'ent' ? 'Quién recibe' : 'Quién aprueba', valor: doc.receptor, ph: 'Nombre'})}${campoHTML({k: 'cargoReceptor', label: 'Cargo', valor: doc.cargoReceptor})}</div>`;
     return h;
@@ -150,7 +152,8 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
             ${campoHTML({k: 'fecha', label: 'Fecha', tipo: 'date', valor: doc.fecha})}
           </div>
           ${campoHTML({k: 'lugar', label: 'Ciudad de emisión', valor: doc.lugar})}
-          <div class="field"><label>Estado</label><select data-k="estado">${Object.entries(A.ESTADOS).map(([k, v]) => `<option value="${k}"${k === doc.estado ? ' selected' : ''}>${v}</option>`).join('')}</select></div>`)}
+          <div class="field"><label>Estado</label><select data-k="estado">${Object.entries(A.ESTADOS).map(([k, v]) => `<option value="${k}"${k === doc.estado ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
+          <div class="field" style="margin-bottom:0"><label>Formato del PDF</label><div class="pills" data-estilos>${Object.entries(A.ESTILOS_PDF).map(([k, v]) => `<button type="button" class="pill${k === doc.estilo ? ' on' : ''}" data-estilo="${k}" aria-pressed="${k === doc.estilo}">${esc(v)}</button>`).join('')}</div></div>`)}
         ${seccion('Cliente', clienteBloque())}
         ${seccion(cfg.concepto, areaHTML({k: 'concepto', label: 'Texto', valor: doc.concepto, ph: cfg.ph, filas: 4}))}
         ${seccion(cfg.valores ? 'Ítems y valores' : 'Ítems entregados', `<div data-items>${itemsBloque()}</div>`)}
@@ -236,6 +239,7 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
   /* ── eventos ── */
   form.addEventListener('input', (e) => {
     const t = e.target;
+    if (t.hasAttribute('data-dinero')) formatoVivo(t);
     if (t.dataset.k) {
       escribir(doc, t.dataset.k, t.value);
       if (t.dataset.k.startsWith('cliente.')) doc.clienteId = '';
@@ -278,6 +282,12 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
   form.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
     if (!b) return;
+    if (b.dataset.estilo) {
+      doc.estilo = b.dataset.estilo;
+      form.querySelectorAll('[data-estilo]').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+      pintarPrevia();
+      return;
+    }
     if (b.dataset.sw) {
       const k = b.dataset.sw;
       if (k === '_ajustes') {
