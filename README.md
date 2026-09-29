@@ -15,6 +15,9 @@ Emite **cuentas de cobro, cotizaciones, recibos de pago, órdenes de servicio y 
 | Acta de entrega | Constancia de lo entregado y de quién lo recibió conforme |
 
 - **Cuatro formatos de PDF para cualquier documento:** Clásico, Minimalista, Banda (cabecera en bloque de color) y Elegante (serifa y cabecera centrada). Se elige en cada documento y hay uno por defecto en Ajustes.
+- **Menús desplegables** para todo lo que tiene valores habituales (formato, color, ciudad, IVA, retención, validez, anticipo, forma de pago, tiempo de entrega, cargo, banco, unidad…); con «Otro…» se escribe un valor distinto.
+- **Color y tamaño del logo por documento:** cada documento lleva los suyos, partiendo de lo configurado en Ajustes, sin afectar a los demás.
+- Los interruptores son verdes cuando están activados y grises cuando no, en modo claro y oscuro.
 - Los montos se escriben con miles automáticos: al teclear 1500000 el campo muestra 1.500.000.
 - Logo, firma escaneada y color del PDF configurables.
 - Clientes y métodos de pago guardados, para cargarlos con un toque.
@@ -46,7 +49,8 @@ js/ajustes.js       centro de ajustes y sus pantallas
 js/pdf.js           generador de PDF (los cuatro estilos)
 js/almacen.js       datos, numeración, cálculo de totales y respaldo
 js/util.js          dinero, fechas, valor en letras
-js/ui.js            iconos, Pantalla, aviso, dock y tema
+js/ui.js            iconos, Pantalla, aviso, dock, tema, menús desplegables, color y deslizador
+js/opciones.js      valores de los menús (ciudades, bancos, porcentajes…)
 service-worker.js   funcionamiento sin conexión
 tools/              pruebas sin navegador
 ```

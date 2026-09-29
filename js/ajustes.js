@@ -4,15 +4,16 @@
 
 import * as A from './almacen.js';
 import {esc, imagenAData, descargar, hoyISO, iniciales, aNumero} from './util.js';
-import {ICONOS, abrirPantalla, aviso, aplicarTema, temaActual, confirmarEn} from './ui.js';
+import {ICONOS, abrirPantalla, aviso, aplicarTema, temaActual, confirmarEn, comboHTML, colorHTML, rangoHTML} from './ui.js';
+import {CIUDADES, BANCOS, OPCIONES} from './opciones.js';
 
-const ACENTOS = ['#15161b', '#1e3a5f', '#14532d', '#7f1d1d', '#92400e', '#4c1d95'];
 
 const opcionesHTML = (lista, actual) => lista.map((o) => `<option${o === actual ? ' selected' : ''}>${esc(o)}</option>`).join('');
 
 /** Campos genéricos ligados por `data-k` a un objeto. */
 const camposHTML = (campos, obj) => campos.map((c) => {
   const v = obj[c.k] ?? '';
+  if (c.combo) return comboHTML({k: c.k, label: c.label, opciones: c.combo, valor: v, modo: c.modo, ph: c.ph});
   if (c.area) return `<div class="field"><label>${esc(c.label)}</label><textarea data-k="${c.k}" rows="${c.filas || 3}" placeholder="${esc(c.ph || '')}">${esc(v)}</textarea>${c.ayuda ? `<div class="ayuda">${esc(c.ayuda)}</div>` : ''}</div>`;
   if (c.opciones) return `<div class="field"><label>${esc(c.label)}</label><select data-k="${c.k}">${opcionesHTML(c.opciones, v)}</select></div>`;
   return `<div class="field"><label>${esc(c.label)}</label><input data-k="${c.k}" type="${c.tipo || 'text'}" value="${esc(v)}" placeholder="${esc(c.ph || '')}" ${c.modo ? `inputmode="${c.modo}"` : ''} autocomplete="off">${c.ayuda ? `<div class="ayuda">${esc(c.ayuda)}</div>` : ''}</div>`;
@@ -58,9 +59,9 @@ const abrirEmisor = (alCambiar) => {
       </div>
       ${camposHTML([
         {k: 'nit', label: 'NIT (si aplica)', ph: '1000000000-1', ayuda: 'Con el dígito de verificación del RUT. Déjelo vacío si no lo usa.'},
-        {k: 'regimen', label: 'Régimen o nota fiscal', ph: 'Persona natural - No responsable de IVA'},
+        {k: 'regimen', label: 'Régimen o nota fiscal', combo: OPCIONES.regimen, ph: 'Persona natural - No responsable de IVA'},
         {k: 'direccion', label: 'Dirección'},
-        {k: 'ciudad', label: 'Ciudad', ph: 'Bucaramanga'},
+        {k: 'ciudad', label: 'Ciudad', combo: CIUDADES},
         {k: 'telefono', label: 'Teléfono', modo: 'tel'},
         {k: 'correo', label: 'Correo', tipo: 'email'},
         {k: 'web', label: 'Sitio web', ph: 'Opcional'},
@@ -80,7 +81,7 @@ const abrirEmisor = (alCambiar) => {
 /* ── Marca: logo, firma y color ── */
 const abrirMarca = (alCambiar) => {
   const st = A.obtener();
-  const m = {logo: st.emisor.logo, firma: st.emisor.firma, acento: st.emisor.acento, firmaEnDocs: st.defaults.firmaEnDocs};
+  const m = {logo: st.emisor.logo, firma: st.emisor.firma, acento: st.emisor.acento, logoEscala: st.emisor.logoEscala || 100, firmaEnDocs: st.defaults.firmaEnDocs};
   const p = abrirPantalla({titulo: 'Marca y firma', contenido: ''});
   const pintar = () => {
     p.cuerpo.innerHTML = `
@@ -93,34 +94,32 @@ const abrirMarca = (alCambiar) => {
         <div class="tx">Foto o escaneo de su firma sobre fondo blanco. Se guarda solo en este dispositivo.
           <div class="btn-fila"><button class="btn-secondary" data-subir="firma">${ICONOS.subir} ${m.firma ? 'Cambiar' : 'Subir'}</button>${m.firma ? `<button class="btn-secondary" data-quitar="firma">Quitar</button>` : ''}</div></div></div>
       ${interruptor('firmaEnDocs', 'Incluir la firma en los documentos nuevos', m.firmaEnDocs)}
+      ${m.logo ? `<div style="margin-top:14px">${rangoHTML({k: 'logoEscala', label: 'Tamaño del logo', valor: String(m.logoEscala), min: 40, max: 220, paso: 5})}</div>` : ''}
       <p class="rotulo" style="margin-top:20px">Color de los PDF</p>
-      <div class="card pad"><div class="colores">
-        ${ACENTOS.map((c) => `<button type="button" class="color${c === m.acento ? ' on' : ''}" data-color="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')}
-        <input class="color-libre" type="color" value="${esc(m.acento)}" data-libre aria-label="Otro color">
-      </div><p class="ayuda muted" style="margin-top:10px">Se usa en el título, la línea y la tabla. El diseño de la aplicación no cambia.</p></div>
+      <div class="card pad">${colorHTML({k: 'acento', label: 'Color por defecto', valor: m.acento, paleta: A.PALETA})}
+        <p class="ayuda muted">Se usa en el título, la línea y la tabla. Cada documento puede cambiarlo, y también el tamaño del logo, sin afectar a los demás.</p></div>
       <button class="btn-primary" data-guardar style="width:100%;margin-top:22px">Guardar</button>
       <input type="file" accept="image/*" data-archivo hidden>`;
     enlazarInterruptores(p.cuerpo, m);
   };
   pintar();
+  enlazar(p.cuerpo, m);
   let cual = '';
   p.cuerpo.addEventListener('click', async (ev) => {
     const b = ev.target.closest('button');
     if (!b) return;
     if (b.dataset.subir) { cual = b.dataset.subir; p.cuerpo.querySelector('[data-archivo]').click(); }
     else if (b.dataset.quitar) { m[b.dataset.quitar] = ''; pintar(); }
-    else if (b.dataset.color) { m.acento = b.dataset.color; pintar(); }
     else if (b.dataset.guardar !== undefined) {
       st.emisor.logo = m.logo;
       st.emisor.firma = m.firma;
       st.emisor.acento = m.acento;
+      st.emisor.logoEscala = aNumero(m.logoEscala) || 100;
       st.defaults.firmaEnDocs = m.firmaEnDocs;
       if (A.guardar()) { aviso('Marca guardada'); alCambiar(); p.cerrar(); }
     }
   });
-  p.cuerpo.addEventListener('input', (ev) => { if (ev.target.matches('[data-libre]')) { m.acento = ev.target.value; } });
   p.cuerpo.addEventListener('change', async (ev) => {
-    if (ev.target.matches('[data-libre]')) { m.acento = ev.target.value; pintar(); return; }
     if (!ev.target.matches('[data-archivo]')) return;
     const f = ev.target.files[0];
     if (!f) return;
@@ -151,7 +150,7 @@ const abrirPagos = (alCambiar) => {
     f.cuerpo.innerHTML = `<div class="card pad">
       ${camposHTML([
         {k: 'etiqueta', label: 'Nombre para reconocerlo', ph: 'Nequi personal'},
-        {k: 'banco', label: 'Banco o billetera', ph: 'Bancolombia, Nequi, Daviplata…'},
+        {k: 'banco', label: 'Banco o billetera', combo: BANCOS, ph: 'Nombre del banco o billetera'},
         {k: 'tipo', label: 'Tipo', opciones: ['Ahorros', 'Corriente', 'Nequi', 'Daviplata', 'Llave', 'Otro']},
         {k: 'numero', label: 'Número de cuenta o celular', modo: 'text'},
         {k: 'titular', label: 'Titular', ph: 'Nombre del titular'},
@@ -220,11 +219,11 @@ const abrirDefaults = (alCambiar) => {
   p.cuerpo.innerHTML = `<p class="sub" style="margin-bottom:16px">Se cargan en cada documento nuevo. Siempre se pueden cambiar documento por documento.</p>
     <div class="card pad">
       <div class="field"><label>Formato del PDF por defecto</label><select data-k="estilo">${Object.entries(A.ESTILOS_PDF).map(([k, v]) => `<option value="${k}"${k === d.estilo ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></div>
-      <div class="row2">${camposHTML([{k: 'ivaPct', label: 'IVA %', modo: 'decimal'}, {k: 'retPct', label: 'Retención %', modo: 'decimal'}], d)}</div>
+      <div class="row2">${camposHTML([{k: 'ivaPct', label: 'IVA %', combo: OPCIONES.iva, modo: 'decimal'}, {k: 'retPct', label: 'Retención %', combo: OPCIONES.retencion, modo: 'decimal'}], d)}</div>
       ${camposHTML([
-        {k: 'retEtiqueta', label: 'Nombre de la retención', ph: 'Retención en la fuente'},
-        {k: 'validezDias', label: 'Validez de las cotizaciones (días)', modo: 'numeric'},
-        {k: 'anticipoPct', label: 'Anticipo por defecto en cotizaciones (%)', modo: 'decimal'},
+        {k: 'retEtiqueta', label: 'Nombre de la retención', combo: OPCIONES.retencionNombre},
+        {k: 'validezDias', label: 'Validez de las cotizaciones (días)', combo: OPCIONES.validez, modo: 'numeric'},
+        {k: 'anticipoPct', label: 'Anticipo por defecto en cotizaciones (%)', combo: OPCIONES.anticipo, modo: 'decimal'},
         {k: 'notasCot', label: 'Notas por defecto de la cotización', area: true, filas: 3},
         {k: 'pie', label: 'Pie de página de todos los PDF', ph: 'Si lo deja vacío se usa su marca, teléfono y correo'},
       ], d)}
@@ -253,10 +252,10 @@ const abrirRespaldo = (alCambiar) => {
     </div>
     <button class="btn-primary" data-exportar style="width:100%">${ICONOS.respaldo} Descargar respaldo</button>
     <p class="rotulo" style="margin-top:24px">Importar</p>
-    <div class="pills" style="margin-bottom:12px">
-      <button class="pill on" data-modo="combinar">Sumar a lo que hay</button>
-      <button class="pill" data-modo="reemplazar">Reemplazar todo</button>
-    </div>
+    <div class="field"><label>Al importar</label><select data-modo-sel>
+      <option value="combinar" selected>Sumar a lo que hay</option>
+      <option value="reemplazar">Reemplazar todo</option>
+    </select></div>
     <button class="btn-secondary" data-importar style="width:100%">${ICONOS.subir} Elegir archivo de respaldo</button>
     <input type="file" accept="application/json,.json" data-archivo hidden>`;
   p.cuerpo.addEventListener('click', (ev) => {
@@ -265,12 +264,10 @@ const abrirRespaldo = (alCambiar) => {
     if (b.dataset.exportar !== undefined) {
       descargar(new Blob([A.exportar()], {type: 'application/json'}), `stickreceipt-respaldo-${hoyISO()}.json`);
       aviso('Respaldo descargado');
-    } else if (b.dataset.modo) {
-      modo = b.dataset.modo;
-      p.cuerpo.querySelectorAll('[data-modo]').forEach((x) => x.classList.toggle('on', x === b));
     } else if (b.dataset.importar !== undefined) p.cuerpo.querySelector('[data-archivo]').click();
   });
   p.cuerpo.addEventListener('change', async (ev) => {
+    if (ev.target.matches('[data-modo-sel]')) { modo = ev.target.value; return; }
     if (!ev.target.matches('[data-archivo]')) return;
     const f = ev.target.files[0];
     if (!f) return;

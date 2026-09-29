@@ -1,10 +1,10 @@
 /* Service worker: deja la herramienta funcionando sin conexión.
    Estrategia: red primero para el propio sitio (siempre la versión nueva si hay señal) y caché
    de respaldo. Subir VERSION al publicar cambios para renovar la caché. */
-const VERSION = 'stickreceipt-v1.1.0';
+const VERSION = 'stickreceipt-v1.2.0';
 const ARCHIVOS = [
   './', './index.html', './estilos.css', './manifest.json',
-  './js/app.js', './js/almacen.js', './js/ajustes.js', './js/editor.js', './js/pdf.js', './js/ui.js', './js/util.js',
+  './js/app.js', './js/almacen.js', './js/ajustes.js', './js/editor.js', './js/opciones.js', './js/pdf.js', './js/ui.js', './js/util.js',
   './lib/jspdf.umd.min.js', './icon-192.png', './icon-512.png', './favicon.png', './apple-touch-icon.png',
 ];
 

@@ -4,9 +4,10 @@
 import * as A from './almacen.js';
 import {esc, aNumero, dinero, cantidad, formatoVivo, valorEnLetras, descargar} from './util.js';
 import {construirPDF, nombreDePdf, conValores} from './pdf.js';
-import {ICONOS, abrirPantalla, aviso, confirmarEn} from './ui.js';
+import {ICONOS, abrirPantalla, aviso, confirmarEn, comboHTML, colorHTML, rangoHTML} from './ui.js';
+import {CIUDADES, OPCIONES} from './opciones.js';
 
-const UNIDADES = ['und', 'h', 'día', 'sem', 'mes', 'm²', 'ml', 'kg', 'pág', 'global'];
+const UNIDADES = ['und', 'h', 'día', 'sem', 'mes', 'seg', 'm²', 'ml', 'm³', 'kg', 'pág', 'viaje', 'global'];
 const MEDIOS = ['Transferencia', 'Nequi', 'Daviplata', 'Efectivo', 'Cheque', 'Tarjeta', 'Otro'];
 
 /* Qué muestra cada tipo. `ajustes` = descuento / IVA / retención. */
@@ -45,9 +46,11 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
   const doc = JSON.parse(JSON.stringify(docInicial));
   // Documentos guardados antes de que existieran los estilos se emitieron en el clásico.
   if (!A.ESTILOS_PDF[doc.estilo]) doc.estilo = 'clasico';
+  if (!doc.acento) doc.acento = st.emisor.acento || '#15161b';
+  if (!doc.logoEscala) doc.logoEscala = st.emisor.logoEscala || 100;
   const cfg = CFG[doc.tipo];
   const tipoInfo = A.TIPOS_DOC[doc.tipo];
-  const numericos = new Set(['descPct', 'descVal', 'ivaPct', 'retPct', 'validezDias', 'anticipoPct', 'saldo']);
+  const numericos = new Set(['descPct', 'descVal', 'ivaPct', 'retPct', 'validezDias', 'anticipoPct', 'saldo', 'logoEscala']);
 
   const ajustesVisibles = cfg.ajustes && (aNumero(doc.descPct) || aNumero(doc.descVal) || aNumero(doc.ivaPct) || aNumero(doc.retPct));
   const conAjustes = { on: !!ajustesVisibles };
@@ -94,7 +97,7 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
       ${campoHTML({k: 'cliente.contacto', label: 'Contacto (opcional)', valor: doc.cliente.contacto})}
       ${campoHTML({k: 'cliente.direccion', label: 'Dirección', valor: doc.cliente.direccion})}
       <div class="row2">
-        ${campoHTML({k: 'cliente.ciudad', label: 'Ciudad', valor: doc.cliente.ciudad})}
+        ${comboHTML({k: 'cliente.ciudad', label: 'Ciudad', opciones: CIUDADES, valor: doc.cliente.ciudad})}
         ${campoHTML({k: 'cliente.telefono', label: 'Teléfono', valor: doc.cliente.telefono, modo: 'tel'})}
       </div>
       ${campoHTML({k: 'cliente.correo', label: 'Correo', tipo: 'email', valor: doc.cliente.correo})}
@@ -105,14 +108,14 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
     ${cfg.ajustes ? interruptorHTML('_ajustes', 'Descuento, IVA y retenciones', conAjustes.on) : ''}
     <div data-ajustes ${conAjustes.on ? '' : 'hidden'}>
       <div class="row2">
-        ${campoHTML({k: 'descPct', label: 'Descuento %', valor: doc.descPct || '', modo: 'decimal', ph: '0'})}
+        ${comboHTML({k: 'descPct', label: 'Descuento %', opciones: OPCIONES.descuento, valor: String(aNumero(doc.descPct)), modo: 'decimal'})}
         ${campoHTML({k: 'descVal', label: 'Descuento en pesos', valor: doc.descVal ? formatoCampo(aNumero(doc.descVal)) : '', modo: 'decimal', ph: '0', dinero: true})}
       </div>
       <div class="row2">
-        ${campoHTML({k: 'ivaPct', label: 'IVA %', valor: doc.ivaPct || '', modo: 'decimal', ph: '0'})}
-        ${campoHTML({k: 'retPct', label: 'Retención %', valor: doc.retPct || '', modo: 'decimal', ph: '0'})}
+        ${comboHTML({k: 'ivaPct', label: 'IVA %', opciones: OPCIONES.iva, valor: String(aNumero(doc.ivaPct)), modo: 'decimal'})}
+        ${comboHTML({k: 'retPct', label: 'Retención %', opciones: OPCIONES.retencion, valor: String(aNumero(doc.retPct)), modo: 'decimal'})}
       </div>
-      ${campoHTML({k: 'retEtiqueta', label: 'Nombre de la retención', valor: doc.retEtiqueta, ayuda: 'Ej.: Retención en la fuente, ReteICA. Se descuenta del total.'})}
+      ${comboHTML({k: 'retEtiqueta', label: 'Nombre de la retención', opciones: OPCIONES.retencionNombre, valor: doc.retEtiqueta})}
     </div>
     <div class="totales" data-totales></div>
     <div class="letras" data-letras></div>`;
@@ -120,13 +123,13 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
   const camposTipo = () => {
     const c = cfg.campos;
     let h = '';
-    if (c.includes('validez')) h += `<div class="row2">${campoHTML({k: 'validezDias', label: 'Validez (días)', valor: doc.validezDias, modo: 'numeric'})}${campoHTML({k: 'anticipoPct', label: 'Anticipo %', valor: doc.anticipoPct, modo: 'decimal'})}</div>`;
-    if (c.includes('entrega')) h += campoHTML({k: 'entrega', label: 'Tiempo de entrega', valor: doc.entrega, ph: '15 días hábiles tras el anticipo'});
-    if (c.includes('formaPago')) h += campoHTML({k: 'formaPago', label: 'Forma de pago', valor: doc.formaPago, ph: '50% al iniciar, 50% al entregar'});
+    if (c.includes('validez')) h += `<div class="row2">${comboHTML({k: 'validezDias', label: 'Validez (días)', opciones: OPCIONES.validez, valor: String(aNumero(doc.validezDias)), modo: 'numeric'})}${comboHTML({k: 'anticipoPct', label: 'Anticipo %', opciones: OPCIONES.anticipo, valor: String(aNumero(doc.anticipoPct)), modo: 'decimal'})}</div>`;
+    if (c.includes('entrega')) h += comboHTML({k: 'entrega', label: 'Tiempo de entrega', opciones: OPCIONES.entrega, valor: doc.entrega, ph: '15 días hábiles tras el anticipo'});
+    if (c.includes('formaPago')) h += comboHTML({k: 'formaPago', label: 'Forma de pago', opciones: OPCIONES.formaPago, valor: doc.formaPago, ph: '50% al iniciar, 50% al entregar'});
     if (c.includes('medioPago')) h += `<div class="field"><label>Medio de pago</label><select data-k="medioPago">${MEDIOS.map((m) => `<option${m === doc.medioPago ? ' selected' : ''}>${m}</option>`).join('')}</select></div>`;
     if (c.includes('referencia')) h += `<div class="row2">${campoHTML({k: 'referencia', label: 'Referencia (opcional)', valor: doc.referencia})}${campoHTML({k: 'saldo', label: 'Saldo pendiente', valor: doc.saldo ? formatoCampo(aNumero(doc.saldo)) : '', modo: 'decimal', ph: '0', dinero: true})}</div>`;
     if (c.includes('fechas')) h += `<div class="row2">${campoHTML({k: 'inicio', label: 'Inicio', tipo: 'date', valor: doc.inicio})}${campoHTML({k: 'fin', label: 'Entrega', tipo: 'date', valor: doc.fin})}</div>`;
-    if (c.includes('receptor')) h += `<div class="row2">${campoHTML({k: 'receptor', label: doc.tipo === 'ent' ? 'Quién recibe' : 'Quién aprueba', valor: doc.receptor, ph: 'Nombre'})}${campoHTML({k: 'cargoReceptor', label: 'Cargo', valor: doc.cargoReceptor})}</div>`;
+    if (c.includes('receptor')) h += `<div class="row2">${campoHTML({k: 'receptor', label: doc.tipo === 'ent' ? 'Quién recibe' : 'Quién aprueba', valor: doc.receptor, ph: 'Nombre'})}${comboHTML({k: 'cargoReceptor', label: 'Cargo', opciones: OPCIONES.cargos, valor: doc.cargoReceptor})}</div>`;
     return h;
   };
 
@@ -151,9 +154,11 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
             ${campoHTML({k: 'num', label: 'Número', valor: doc.num})}
             ${campoHTML({k: 'fecha', label: 'Fecha', tipo: 'date', valor: doc.fecha})}
           </div>
-          ${campoHTML({k: 'lugar', label: 'Ciudad de emisión', valor: doc.lugar})}
+          ${comboHTML({k: 'lugar', label: 'Ciudad de emisión', opciones: CIUDADES, valor: doc.lugar})}
           <div class="field"><label>Estado</label><select data-k="estado">${Object.entries(A.ESTADOS).map(([k, v]) => `<option value="${k}"${k === doc.estado ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
-          <div class="field" style="margin-bottom:0"><label>Formato del PDF</label><div class="pills" data-estilos>${Object.entries(A.ESTILOS_PDF).map(([k, v]) => `<button type="button" class="pill${k === doc.estilo ? ' on' : ''}" data-estilo="${k}" aria-pressed="${k === doc.estilo}">${esc(v)}</button>`).join('')}</div></div>`)}
+          <div class="field"><label>Formato del PDF</label><select data-k="estilo">${Object.entries(A.ESTILOS_PDF).map(([k, v]) => `<option value="${k}"${k === doc.estilo ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></div>
+          ${colorHTML({k: 'acento', label: 'Color de este documento', valor: doc.acento, paleta: A.PALETA})}
+          ${st.emisor.logo ? rangoHTML({k: 'logoEscala', label: 'Tamaño del logo', valor: String(aNumero(doc.logoEscala) || 100), min: 40, max: 220, paso: 5}) : ''}`)}
         ${seccion('Cliente', clienteBloque())}
         ${seccion(cfg.concepto, areaHTML({k: 'concepto', label: 'Texto', valor: doc.concepto, ph: cfg.ph, filas: 4}))}
         ${seccion(cfg.valores ? 'Ítems y valores' : 'Ítems entregados', `<div data-items>${itemsBloque()}</div>`)}
@@ -263,7 +268,7 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
       return;
     }
     if (t.dataset.ik === 'c' || t.dataset.ik === 'v') refrescarTotales();
-    if (t.dataset.k === 'pagoId' || t.dataset.k === 'estado' || t.dataset.ik === 'u') programar();
+    if (t.dataset.k === 'pagoId' || t.dataset.k === 'estado' || t.dataset.k === 'estilo' || t.dataset.ik === 'u') programar();
   });
   form.addEventListener('focusout', (e) => {
     const t = e.target;
@@ -271,7 +276,7 @@ export const abrirEditor = (docInicial, {nuevo = false, alCerrar} = {}) => {
       const n = aNumero(t.value);
       doc.items[+t.dataset.i][t.dataset.ik] = n;
       t.value = n ? formatoCampo(n) : '';
-    } else if (t.dataset.k && numericos.has(t.dataset.k)) {
+    } else if (t.dataset.k && numericos.has(t.dataset.k) && t.type !== 'range') {
       const n = aNumero(t.value);
       doc[t.dataset.k] = n;
       t.value = n ? formatoCampo(n) : '';

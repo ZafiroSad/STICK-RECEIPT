@@ -16,6 +16,8 @@ Verificado en vivo (navegador integrado, 375 px y 1280 px, oscuro y claro): fluj
 
 **Verificado en producción:** los 17 archivos responden 200 con el tipo correcto, `privado/` da 404, sin errores de consola, el service worker queda `activated` en el alcance del sitio con los 16 archivos en caché, y el PDF se genera desde el sitio publicado.
 
+**Nota de pruebas:** el navegador integrado no pinta cuando está en segundo plano, así que las transiciones CSS no avanzan y `getComputedStyle` devuelve el color de partida. Para medir colores se apaga la transición un momento (`style.transition = 'none'`); no es un defecto de la aplicación.
+
 **No verificado:** el arranque real sin conexión (solo se comprobó la caché), la vista previa del PDF con `view=FitH` (el visor del navegador integrado la ignora), compartir con `navigator.share` y todo en un iPhone real.
 
 ## 3. Decisiones — no re-litigar sin discusión explícita
@@ -33,6 +35,9 @@ Verificado en vivo (navegador integrado, 375 px y 1280 px, oscuro y claro): fluj
 12. **Cuatro formatos de PDF para los cinco tipos** (`ESTILOS_PDF` en `almacen.js`, ramas por estilo en `pdf.js`): *clásico* (cajas grises, barra oscura), *minimalista* (solo filetes), *banda* (bloque de color a sangre con el logo sobre placa blanca) y *elegante* (Times, cabecera centrada, filete doble). El estilo va **guardado en cada documento** (`doc.estilo`); los anteriores a los estilos se abren como clásico. El por defecto vive en Ajustes → Valores por defecto. Pedido del Señor Stick: "que sea lo que sea que se emita tenga al menos 3 estilos".
 13. **Montos con miles automáticos al teclear** (`formatoVivo` en `util.js`): solo entran dígitos y una coma decimal; el punto lo pone la función y el cursor se recoloca contando dígitos. Los campos de dinero llevan `data-dinero`. `dinero()` agrupa **a mano**: Intl en es-CO no agrupa los números de cuatro cifras (mostraba `$ 1000`).
 14. **Icono propio.** `LOGO.png` es el icono de STICK RECEIPT (una hoja con líneas y la marca), distinto al de STICK FIT; de él salen `icon-512`, `icon-192`, `apple-touch-icon` y `favicon`.
+15. **Menús desplegables en todo lo que tiene valores habituales** (pedido del Señor Stick): `comboHTML` en `ui.js` pone un menú delante del campo de texto real y «Otro…» lo descubre; el campo (`data-k`) sigue guardando el dato, así que ni el editor ni los ajustes se enteran. Las píldoras de selección (formato, filtro del historial, modo de importación) pasaron a menús. Los valores viven en `js/opciones.js`. Los porcentajes se pasan como texto del número (`'19'`) para que coincidan con la opción.
+16. **Color y tamaño del logo son propios de cada documento** (`doc.acento`, `doc.logoEscala`): al crear un documento parten de lo configurado en Ajustes → Marca, y cambiarlos en uno no toca los demás. El PDF usa `doc.acento || emisor.acento`. El tamaño escala el logo en los cuatro estilos (40 a 220 %); el estilo *banda* agranda el bloque de color para que quepa.
+17. **Interruptor encendido = verde, apagado = gris, también en modo claro.** El defecto era de especificidad: `html.light .interruptor .pista` (0,3,1) le ganaba a `.interruptor.on .pista` (0,3,0), y en claro el «sí» se veía gris. La regla `html.light .interruptor.on .pista` va justo después.
 11. **`requestAnimationFrame` prohibido para mostrar el aviso.** Si la pestaña no pinta, rAF se pospone y el temporizador de salida corría antes que la entrada: el aviso quedaba pegado. Se usa reflow forzado.
 
 ## 4. Arquitectura

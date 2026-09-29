@@ -205,6 +205,8 @@ html:not(.light) .field input[type=date]::-webkit-calendar-picker-indicator{filt
 .interruptor.on .pista{background:var(--emerald)}
 .interruptor.on .pista::after{transform:translateX(18px)}
 html.light .interruptor .pista{background:var(--zinc-650)}
+/* En claro, «sí» también es verde: esta regla tiene que ir después y ser más específica que la de arriba */
+html.light .interruptor.on .pista{background:var(--emerald)}
 html.light .interruptor .pista::after{background:#fff}
 
 /* Píldoras seleccionables: envuelven en varias líneas, nunca scroll lateral */
@@ -395,3 +397,16 @@ html.light .pantalla::before{background:radial-gradient(120% 60% at 50% 0%,rgba(
   .pill:hover{border-color:var(--linea-fuerte)}
   .fab:hover{transform:translateY(-3px)}
 }
+
+/* ── Menús desplegables, color y deslizador ── */
+.combo .combo-otro{margin-top:8px}
+.field select{appearance:none;-webkit-appearance:none;padding-right:44px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23797d8a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center}
+.color-fila{display:flex;align-items:center;gap:10px}
+.color-fila select{flex:1}
+.color-muestra{width:34px;height:34px;border-radius:50%;flex:none;box-shadow:0 0 0 1px var(--v-borde),inset 0 0 0 2px var(--bg)}
+.color-libre{margin-top:8px;width:100%;height:44px;padding:4px;border-radius:999px;border:1px solid var(--v-borde);background:var(--campo-input)}
+.rango{width:100%;accent-color:var(--tinta);height:34px}
+.rango-valor{float:right;color:var(--tinta);font-variant-numeric:tabular-nums}
+.field .ayuda + .ayuda{margin-top:2px}

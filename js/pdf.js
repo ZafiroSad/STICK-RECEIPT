@@ -56,7 +56,9 @@ export const construirPDF = (estado, doc) => {
   const pdf = new jsPDF({unit: 'mm', format: 'a4', compress: true});
   const emisor = estado.emisor;
   const cfg = CAMPOS_TIPO[doc.tipo];
-  const acento = rgb(emisor.acento);
+  const acento = rgb(doc.acento || emisor.acento);
+  // Tamaño del logo: 100 % es el tamaño de diseño; cada documento puede llevar el suyo.
+  const eLogo = Math.min(2.2, Math.max(0.4, (aNumero(doc.logoEscala) || aNumero(emisor.logoEscala) || 100) / 100));
   const tot = calcular(doc);
   const est = ESTILOS_PDF[doc.estilo] ? doc.estilo : 'clasico';
   const FAM = est === 'elegante' ? 'times' : 'helvetica';
@@ -156,7 +158,8 @@ export const construirPDF = (estado, doc) => {
 
   if (est === 'banda') {
     // Bloque de color a sangre completa; el logo va sobre una placa blanca porque es de fondo blanco.
-    const hBanda = 38;
+    const hLogoBanda = 20 * eLogo;
+    const hBanda = Math.max(38, hLogoBanda + 18);
     relleno(acento);
     pdf.rect(0, 0, A4.w, hBanda, 'F');
     let xTexto = M;
@@ -164,26 +167,28 @@ export const construirPDF = (estado, doc) => {
       let p = null;
       try { p = pdf.getImageProperties(emisor.logo); } catch (e) { /* sin logo utilizable */ }
       if (p) {
-        const h = 20;
-        const w = Math.min(58, (p.width / p.height) * h);
+        const h = hLogoBanda;
+        const w = Math.min(58 * eLogo, (p.width / p.height) * h);
+        const yPlaca = (hBanda - (h + 4)) / 2;
         relleno(BLANCO);
-        pdf.roundedRect(M, 7, w + 6, h + 4, 2, 2, 'F');
-        pdf.addImage(emisor.logo, formatoImg(emisor.logo), M + 3, 9, w, h, undefined, 'FAST');
+        pdf.roundedRect(M, yPlaca, w + 6, h + 4, 2, 2, 'F');
+        pdf.addImage(emisor.logo, formatoImg(emisor.logo), M + 3, yPlaca + 2, w, h, undefined, 'FAST');
         xTexto = M + w + 6;
       }
     }
     if (xTexto === M) {
       fuente(15, 'bold');
       color(BLANCO);
-      pdf.text(limpio(marca || 'STICK RECEIPT'), M, 20);
+      pdf.text(limpio(marca || 'STICK RECEIPT'), M, hBanda / 2 + 2);
     }
     fuente(19, 'bold');
     color(BLANCO);
-    pdf.text(cfg.titulo, A4.w - M, 16, {align: 'right'});
+    const yTit = hBanda / 2 - 3;
+    pdf.text(cfg.titulo, A4.w - M, yTit, {align: 'right'});
     fuente(10.5, 'bold');
-    pdf.text(`N.º ${limpio(doc.num)}`, A4.w - M, 23, {align: 'right'});
+    pdf.text(`N.º ${limpio(doc.num)}`, A4.w - M, yTit + 7, {align: 'right'});
     fuente(8.6, 'normal');
-    pdf.text(limpio(lugarFecha), A4.w - M, 28.6, {align: 'right'});
+    pdf.text(limpio(lugarFecha), A4.w - M, yTit + 12.6, {align: 'right'});
     y = hBanda + 9;
   } else if (est === 'elegante') {
     // Cabecera centrada con filete doble.
@@ -191,9 +196,9 @@ export const construirPDF = (estado, doc) => {
     if (emisor.logo) {
       try {
         const p = pdf.getImageProperties(emisor.logo);
-        let h = 14;
+        let h = 14 * eLogo;
         let w = (p.width / p.height) * h;
-        if (w > 50) { w = 50; h = (p.height / p.width) * w; }
+        if (w > 50 * eLogo) { w = 50 * eLogo; h = (p.height / p.width) * w; }
         pdf.addImage(emisor.logo, formatoImg(emisor.logo), (A4.w - w) / 2, y, w, h, undefined, 'FAST');
         hLogo = h;
       } catch (e) { console.warn('Logo no válido para el PDF', e); }
@@ -220,7 +225,7 @@ export const construirPDF = (estado, doc) => {
     y += 5.5;
   } else {
     // clasico y minimalista: logo a la izquierda, título a la derecha
-    const l = dibujarLogo(M, y, 21, 62);
+    const l = dibujarLogo(M, y, 21 * eLogo, 62 * eLogo);
     let altoCab = l ? l.h : 0;
     if (!altoCab) {
       fuente(15, 'bold');

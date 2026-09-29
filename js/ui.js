@@ -1,5 +1,7 @@
 /* Piezas de interfaz comunes: iconos, Pantalla (shell de todo formulario), toast, dock y tema. */
 
+import {esc} from './util.js';
+
 const I = (d, extra = '') =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
 
@@ -124,6 +126,77 @@ export const abrirPantalla = ({titulo, ancha = false, contenido, alCerrar}) => {
 export const cerrarTodas = () => {
   [...pila].reverse().forEach((el) => el.querySelector('[data-volver]')?.click());
 };
+
+
+/* ── Menús desplegables ──────────────────────────────────────────────────
+   Todo lo que tiene un conjunto habitual de valores se elige de un menú; si el valor que se necesita no
+   está, «Otro…» descubre un campo para escribirlo. El campo (`data-k`) sigue siendo el que guarda el dato,
+   así que el resto de la aplicación no se entera de que hay un menú delante. */
+export const comboHTML = ({k, label, opciones, valor = '', modo = '', ph = '', otro = 'Otro…', tipo = 'text'}) => {
+  const v = String(valor ?? '');
+  const coincide = opciones.some((o) => String(o) === v);
+  const sel = coincide ? v : v === '' ? '' : '__otro';
+  const lista = opciones.map((o) => `<option value="${esc(o)}"${String(o) === sel ? ' selected' : ''}>${esc(o)}</option>`).join('');
+  return `<div class="field combo"><label>${esc(label)}</label>
+    <select data-combo aria-label="${esc(label)}">${sel === '' ? '<option value="" selected disabled>Elegir…</option>' : ''}${lista}<option value="__otro"${sel === '__otro' ? ' selected' : ''}>${esc(otro)}</option></select>
+    <input class="combo-otro" data-k="${esc(k)}" type="${tipo}" value="${esc(v)}" placeholder="${esc(ph)}" ${modo ? `inputmode="${modo}"` : ''} ${sel === '__otro' ? '' : 'hidden'} autocomplete="off"></div>`;
+};
+
+/** Selector de color: menú con la paleta y «Personalizado…», que muestra el selector libre. */
+export const colorHTML = ({k, label, valor, paleta}) => {
+  const v = String(valor || '').toLowerCase();
+  const enPaleta = paleta.some((c) => c.color.toLowerCase() === v);
+  const opciones = paleta.map((c) => `<option value="${esc(c.color)}"${c.color.toLowerCase() === v ? ' selected' : ''}>${esc(c.nombre)}</option>`).join('');
+  return `<div class="field combo"><label>${esc(label)}</label>
+    <div class="color-fila"><span class="color-muestra" style="background:${esc(v || '#15161b')}"></span>
+      <select data-color-sel aria-label="${esc(label)}">${opciones}<option value="__otro"${enPaleta ? '' : ' selected'}>Personalizado…</option></select></div>
+    <input class="color-libre" data-k="${esc(k)}" type="color" value="${esc(v || '#15161b')}" ${enPaleta ? 'hidden' : ''} aria-label="${esc(label)} personalizado"></div>`;
+};
+
+/** Deslizador con su valor a la vista (por ejemplo, el tamaño del logo). */
+export const rangoHTML = ({k, label, valor, min, max, paso = 5, sufijo = '%'}) =>
+  `<div class="field"><label>${esc(label)} <b class="rango-valor" data-rango-valor>${esc(valor)}${esc(sufijo)}</b></label>
+    <input class="rango" data-rango data-sufijo="${esc(sufijo)}" data-k="${esc(k)}" type="range" min="${min}" max="${max}" step="${paso}" value="${esc(valor)}"></div>`;
+
+// Un solo oyente para todos los menús y deslizadores de la aplicación.
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (!t.matches) return;
+  if (t.matches('select[data-combo]')) {
+    const campo = t.parentElement.querySelector('input[data-k]');
+    if (t.value === '__otro') {
+      campo.hidden = false;
+      campo.focus();
+    } else {
+      campo.hidden = true;
+      campo.value = t.value;
+      campo.dispatchEvent(new Event('input', {bubbles: true}));
+      campo.dispatchEvent(new Event('change', {bubbles: true}));
+    }
+  } else if (t.matches('select[data-color-sel]')) {
+    const campo = t.closest('.field').querySelector('input[type=color]');
+    const muestra = t.closest('.field').querySelector('.color-muestra');
+    if (t.value === '__otro') campo.hidden = false;
+    else {
+      campo.hidden = true;
+      campo.value = t.value;
+      if (muestra) muestra.style.background = t.value;
+      campo.dispatchEvent(new Event('input', {bubbles: true}));
+      campo.dispatchEvent(new Event('change', {bubbles: true}));
+    }
+  }
+});
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (!t.matches) return;
+  if (t.matches('input[data-rango]')) {
+    const salida = t.closest('.field').querySelector('[data-rango-valor]');
+    if (salida) salida.textContent = t.value + (t.dataset.sufijo || '');
+  } else if (t.matches('input[type=color]')) {
+    const muestra = t.closest('.field')?.querySelector('.color-muestra');
+    if (muestra) muestra.style.background = t.value;
+  }
+});
 
 /* ── Dock: una sola píldora que viaja ── */
 export const montarDock = (nav, alElegir) => {

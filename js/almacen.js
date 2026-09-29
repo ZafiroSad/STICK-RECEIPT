@@ -14,6 +14,18 @@ export const TIPOS_DOC = {
   ent: {nombre: 'Acta de entrega', corto: 'Acta de entrega', prefijo: 'AE-'},
 };
 
+/** Colores de acento para los PDF: cada documento puede llevar el suyo. */
+export const PALETA = [
+  {nombre: 'Grafito', color: '#15161b'},
+  {nombre: 'Azul marino', color: '#1e3a5f'},
+  {nombre: 'Azul petróleo', color: '#0f4c5c'},
+  {nombre: 'Verde bosque', color: '#14532d'},
+  {nombre: 'Vino', color: '#7f1d1d'},
+  {nombre: 'Ocre', color: '#92400e'},
+  {nombre: 'Violeta', color: '#4c1d95'},
+  {nombre: 'Gris piedra', color: '#4b5563'},
+];
+
 /** Estilos de formato del PDF. Todos sirven para los cinco tipos de documento. */
 export const ESTILOS_PDF = {
   clasico: 'Clásico',
@@ -36,7 +48,7 @@ const porDefecto = () => ({
     telefono: '', correo: '', web: '', regimen: '',
     noIva: false,
     textoNoIva: 'Manifiesto que no soy responsable del impuesto sobre las ventas (IVA).',
-    logo: '', firma: '', acento: '#15161b',
+    logo: '', firma: '', acento: '#15161b', logoEscala: 100,
   },
   pagos: [],
   numeracion: Object.fromEntries(
@@ -144,6 +156,8 @@ export const docVacio = (tipo, hoy) => {
   return {
     id: uid(), tipo, num: proximoNumero(tipo), numSugerido: proximoNumero(tipo), fecha: hoy, lugar: e.ciudad || '',
     estilo: ESTILOS_PDF[d.estilo] ? d.estilo : 'clasico',
+    // Color y tamaño del logo propios de este documento: parten de lo configurado, pero se pueden cambiar sin tocar los demás.
+    acento: e.acento || '#15161b', logoEscala: e.logoEscala || 100,
     cliente: {nombre: '', tipoDoc: 'NIT', doc: '', direccion: '', ciudad: '', correo: '', telefono: '', contacto: ''},
     guardarCliente: true,
     concepto: '',

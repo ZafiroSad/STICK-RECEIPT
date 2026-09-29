@@ -3,7 +3,8 @@
 
 import * as A from './almacen.js';
 import {esc, dinero, fechaCorta, hoyISO, iniciales, descargar} from './util.js';
-import {ICONOS, aplicarTema, aviso, montarDock, abrirPantalla, confirmarEn} from './ui.js';
+import {ICONOS, aplicarTema, aviso, montarDock, abrirPantalla, confirmarEn, comboHTML} from './ui.js';
+import {CIUDADES} from './opciones.js';
 import {abrirEditor} from './editor.js';
 import {abrirAjustes} from './ajustes.js';
 import {blobDePdf, nombreDePdf} from './pdf.js';
@@ -122,10 +123,10 @@ const pintarHistorial = () => {
     </div>
     <div class="seccion">
       <div class="buscador"><input type="search" data-buscar placeholder="Buscar por número, cliente o concepto" value="${esc(filtro.texto)}" aria-label="Buscar documentos"></div>
-      <div class="pills" style="margin-bottom:16px">
-        <button class="pill${filtro.tipo === 'todos' ? ' on' : ''}" data-f="todos">Todos</button>
-        ${Object.entries(A.TIPOS_DOC).map(([k, x]) => `<button class="pill${filtro.tipo === k ? ' on' : ''}" data-f="${k}">${esc(x.corto)}</button>`).join('')}
-      </div>
+      <div class="field"><label>Mostrar</label><select data-filtro>
+        <option value="todos"${filtro.tipo === 'todos' ? ' selected' : ''}>Todos los documentos</option>
+        ${Object.entries(A.TIPOS_DOC).map(([k, x]) => `<option value="${k}"${filtro.tipo === k ? ' selected' : ''}>${esc(x.nombre)}</option>`).join('')}
+      </select></div>
       <div class="lista reveal" data-lista>${visibles.map(itemDoc).join('') ||
         `<div class="vacio"><div class="ei">${ICONOS.historial}</div>${docs.length ? 'Ningún documento coincide con el filtro.' : 'Todavía no ha emitido ningún documento.'}</div>`}</div>
     </div>`;
@@ -137,10 +138,12 @@ const pintarHistorial = () => {
     const lista = docs.filter((d) => (filtro.tipo === 'todos' || d.tipo === filtro.tipo) && (!t2 || `${d.num} ${d.cliente.nombre} ${d.concepto}`.toLowerCase().includes(t2)));
     $('[data-lista]').innerHTML = lista.map(itemDoc).join('') || `<div class="vacio"><div class="ei">${ICONOS.historial}</div>Ningún documento coincide.</div>`;
   };
+  cont.onchange = (e) => {
+    if (e.target.matches('[data-filtro]')) { filtro.tipo = e.target.value; pintarHistorial(); }
+  };
   cont.onclick = (e) => {
     const b = e.target.closest('button');
     if (!b) return;
-    if (b.dataset.f) { filtro.tipo = b.dataset.f; pintarHistorial(); return; }
     const id = b.dataset.id;
     if (!id) return;
     const doc = st.docs.find((d) => d.id === id);
@@ -210,7 +213,7 @@ const abrirFormularioCliente = (cliente, nuevo) => {
     </div>
     ${campo('contacto', 'Contacto')}
     ${campo('direccion', 'Dirección')}
-    <div class="row2">${campo('ciudad', 'Ciudad')}${campo('telefono', 'Teléfono', 'inputmode="tel"')}</div>
+    <div class="row2">${comboHTML({k: 'ciudad', label: 'Ciudad', opciones: CIUDADES, valor: c.ciudad})}${campo('telefono', 'Teléfono', 'inputmode="tel"')}</div>
     ${campo('correo', 'Correo', 'type="email"')}
     <button class="btn-primary" data-guardar style="width:100%">Guardar</button>
     ${nuevo ? '' : `<button class="btn-danger" data-borrar style="width:100%;margin-top:10px">${ICONOS.basura} Eliminar</button><div data-conf style="margin-top:10px"></div>`}
