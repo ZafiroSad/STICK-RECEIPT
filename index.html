@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#15161b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="STICK DOCS">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./favicon.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<title>STICK DOCS</title>
+<meta name="description" content="Cuentas de cobro, cotizaciones, recibos, órdenes de servicio y actas de entrega en PDF, desde el navegador.">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:title" content="STICK DOCS">
+<meta property="og:description" content="Cuentas de cobro, cotizaciones y más, en PDF.">
+<meta property="og:image" content="./icon-512.png">
+<!-- Anti-destello: aplica el tema ANTES del primer pintado -->
+<script>try{if(localStorage.getItem('stick:tema')==='claro')document.documentElement.classList.add('light')}catch(e){}</script>
+<link rel="stylesheet" href="./estilos.css">
+</head>
+<body>
+
+<!-- El campo: cuatro masas de luz que derivan + grano. Sustituye al fondo plano -->
+<div class="campo" aria-hidden="true">
+  <div class="masa m1"></div><div class="masa m2"></div><div class="masa m3"></div><div class="masa m4"></div>
+  <div class="grano"></div>
+</div>
+
+<div class="lienzo">
+  <!-- Pantalla de carga: el anillo canónico sobre el campo -->
+  <div id="carga" class="pantalla-carga" role="status" aria-label="Cargando"><span class="cargando-anillo"></span></div>
+
+  <div id="app" hidden>
+    <header class="top">
+      <div class="top-inner">
+        <button class="icon-btn" data-recargar aria-label="Recargar" title="Recargar"></button>
+        <span class="rotulo-app trunca">STICK <b>DOCS</b></span>
+        <button class="avatar" data-avatar aria-label="Ajustes y perfil" title="Ajustes"></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="vista on" id="v-nuevo"></section>
+      <section class="vista" id="v-historial"></section>
+      <section class="vista" id="v-clientes"></section>
+    </main>
+  </div>
+</div>
+
+<!-- Capas que se montan encima: hermanas del .lienzo, nunca hijas -->
+<button class="fab" hidden aria-label="Nuevo cliente" title="Nuevo cliente"></button>
+
+<nav class="dock" aria-label="Navegación">
+  <span class="dock-pildora" aria-hidden="true"></span>
+  <button class="dock-btn on" data-vista="nuevo" data-icono="nuevo" aria-label="Emitir" title="Emitir"></button>
+  <button class="dock-btn" data-vista="historial" data-icono="historial" aria-label="Historial" title="Historial"></button>
+  <button class="dock-btn" data-vista="clientes" data-icono="clientes" aria-label="Clientes" title="Clientes"></button>
+</nav>
+
+<script src="./lib/jspdf.umd.min.js"></script>
+<script type="module" src="./js/app.js"></script>
+<noscript><p style="padding:32px;color:#adb0bb;font-family:sans-serif">STICK DOCS necesita JavaScript para generar los PDF.</p></noscript>
+</body>
+</html>

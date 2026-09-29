@@ -1,0 +1,16 @@
+# Datos personales: NUNCA al repositorio (el sitio es público)
+privado/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.log
+
+# Temporales
+*.tmp
+node_modules/
