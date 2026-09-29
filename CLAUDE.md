@@ -10,11 +10,13 @@ Sitio estático, sin build, pensado para **GitHub Pages sirviendo `main` directo
 
 ## 2. Estado actual
 
-**v1.0.0 — construida y verificada en local; sin publicar.** Nombre definitivo: STICK RECEIPT (renombrada el 2026-09-29 desde el nombre de trabajo STICK DOCS).
+**v1.0.0 — PUBLICADA el 2026-09-29** en https://zafirosad.github.io/STICK-RECEIPT/ (repo público `ZafiroSad/STICK-RECEIPT`, GitHub Pages sirviendo `main` desde la raíz, sin workflows). Nombre definitivo: STICK RECEIPT (renombrada el 2026-09-29 desde el nombre de trabajo STICK DOCS).
 
 Verificado en vivo (navegador integrado, 375 px y 1280 px, oscuro y claro): flujo completo de emitir una cuenta de cobro con datos reales, guardado, consecutivos, historial, duplicar, las seis pantallas de ajustes sin scroll lateral ni errores de consola, respaldo (exportar, reemplazar, combinar, archivos inválidos), escape de HTML en nombres, validaciones. Los cinco PDF más un caso de 26 ítems (tres páginas) se generaron con `node tools/probar-pdf.mjs` y se revisaron como imagen. Dinero y valor en letras: 40 comprobaciones en `tools/probar-util.mjs`.
 
-**No verificado:** el funcionamiento sin conexión (el navegador integrado no registra service workers), la vista previa del PDF con `view=FitH` (el visor del navegador integrado la ignora), compartir con `navigator.share` y todo en un iPhone real.
+**Verificado en producción:** los 17 archivos responden 200 con el tipo correcto, `privado/` da 404, sin errores de consola, el service worker queda `activated` en el alcance del sitio con los 16 archivos en caché, y el PDF se genera desde el sitio publicado.
+
+**No verificado:** el arranque real sin conexión (solo se comprobó la caché), la vista previa del PDF con `view=FitH` (el visor del navegador integrado la ignora), compartir con `navigator.share` y todo en un iPhone real.
 
 ## 3. Decisiones — no re-litigar sin discusión explícita
 
@@ -45,7 +47,6 @@ Ver `README.md` para el mapa de archivos. Lo que no está ahí:
 
 ## 6. Pendientes y problemas conocidos
 
-- [ ] **Publicar**: crear el repo `ZafiroSad/STICK-RECEIPT`, activar Pages sobre `main` y probar allí el service worker y el modo sin conexión. Repo público (Pages), sin datos personales.
 - [ ] Probar en un iPhone real: compartir el PDF, anti-zoom, safe areas, teclado.
 - [ ] El visor de PDF de la vista previa no siempre ajusta al ancho (`view=FitH`); si en Chrome/Safari reales se ve cortado, cambiar por una vista rasterizada.
 - [ ] Consultar con un contador el tratamiento tributario (actividad registrada en el RUT, retención en la fuente que practique el cliente) antes de usar la herramienta con regularidad. Detalle en `privado/NOTAS-PRIVADAS.md`.
@@ -53,5 +54,6 @@ Ver `README.md` para el mapa de archivos. Lo que no está ahí:
 
 ## 7. Historial
 
+- **2026-09-29 — publicada.** Repo público y Pages activados; el sitio tardó unos 45 s en responder. El logo de los PDF pasó a la versión de fondo blanco, recortada al contenido y más grande, y se quitó la leyenda repetida debajo. Al publicar cambios: subir `VERSION` en `service-worker.js`.
 - **2026-09-29 — cuenta de cobro CC-001.** Primer uso real: se emitió la primera cuenta de cobro con `tools/emitir-pdf.mjs` (el mismo generador de la app, sin navegador). Ajuste de última hora: el bloque de firma se compactó de 36 a 30 mm para que una cuenta de cobro con las dos cajas de datos completas siga cabiendo en una hoja.
 - **2026-09-29 — v1.0.0.** Construida en una tarde a partir de la petición de una cuenta de cobro. Se probó de punta a punta con datos reales en el navegador integrado y se dejó el navegador limpio al terminar. Hallazgos que costaron: los iconos SVG sin tamaño se expanden a todo el botón (regla `.btn-* svg`), el `requestAnimationFrame` pospuesto (decisión 11), y una firma escaneada de 4,4 MB que hubo que recortar y reducir a 180 KB.

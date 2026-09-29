@@ -2,6 +2,8 @@
 
 Emite **cuentas de cobro, cotizaciones, recibos de pago, órdenes de servicio y actas de entrega** en PDF, desde el navegador y sin servidor. Sirve en el teléfono y en el computador, y funciona sin conexión una vez cargada.
 
+**Sitio:** https://zafirosad.github.io/STICK-RECEIPT/
+
 ## Qué hace
 
 | Documento | Para qué |
