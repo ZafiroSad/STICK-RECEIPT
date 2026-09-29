@@ -96,8 +96,8 @@ export const construirPDF = (estado, doc) => {
   if (emisor.logo) {
     try {
       const p = pdf.getImageProperties(emisor.logo);
-      const hMax = 15;
-      const wMax = 52;
+      const hMax = 21;
+      const wMax = 62;
       let h = hMax;
       let w = (p.width / p.height) * h;
       if (w > wMax) { w = wMax; h = (p.height / p.width) * w; }
@@ -110,12 +110,6 @@ export const construirPDF = (estado, doc) => {
     color(TINTA);
     pdf.text(limpio(marca || 'STICK RECEIPT'), M, y + 6);
     altoCab = 8;
-  }
-  if (emisor.logo && marca) {
-    fuente(8, 'normal');
-    color(GRIS);
-    pdf.text(limpio(marca), M, y + altoCab + 4.2);
-    altoCab += 5.5;
   }
 
   fuente(18, 'bold');
